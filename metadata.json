@@ -1,0 +1,7 @@
+{
+  "name": "AppaFlow",
+  "description": "Instant financial insights from your receipts and bank exports. Zero-config, offline-first, and powered by Gemini.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

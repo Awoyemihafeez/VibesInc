@@ -1,0 +1,25 @@
+
+{
+  "short_name": "AppaFlow",
+  "name": "AppaFlow Financial Insights",
+  "description": "One-click financial intelligence for bank exports.",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/5839/5839845.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/5839/5839845.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#020617",
+  "background_color": "#020617"
+}
