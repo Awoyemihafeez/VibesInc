@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { CategorizationRule, UserProfile } from '../types';
+import { CategorizationRule, UserProfile, Transaction } from '../types';
 import { CURRENCIES } from '../constants';
-import { Plus, Trash2, User, Camera, Loader2, Search, Edit2, X, Check, ChevronDown, ChevronUp, Save, Filter } from 'lucide-react';
+import { Plus, Trash2, User, Camera, Loader2, Search, Check, ChevronDown, ChevronUp, Save, Filter, Download, Smartphone, ShieldCheck, Share } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 
 interface SettingsProps {
@@ -12,12 +12,14 @@ interface SettingsProps {
   onUpdateProfile: (profile: UserProfile) => void;
   categories: string[];
   onUpdateCategories: (categories: string[]) => void;
+  transactions: Transaction[]; // Added for export functionality
 }
 
 const Settings: React.FC<SettingsProps> = ({ 
     rules, onUpdateRules, onApplyRules, 
     userProfile, onUpdateProfile,
-    categories, onUpdateCategories
+    categories, onUpdateCategories,
+    transactions
 }) => {
   const [expandedSection, setExpandedSection] = useState<string | null>('general');
   
@@ -54,16 +56,13 @@ const Settings: React.FC<SettingsProps> = ({
     setNewSubCategory('');
   };
 
-  // Fix: Added missing handleDeleteRule function
   const handleDeleteRule = (id: string) => {
     onUpdateRules(rules.filter(rule => rule.id !== id));
   };
 
   const handleApplyAllChanges = () => {
     setIsSaving(true);
-    // Profile Update
     onUpdateProfile(tempProfile);
-    // Rules Application
     onApplyRules();
     
     setTimeout(() => {
@@ -84,6 +83,25 @@ const Settings: React.FC<SettingsProps> = ({
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const exportDataPackage = () => {
+    const dataPackage = {
+      profile: userProfile,
+      transactions: transactions,
+      rules: rules,
+      categories: categories,
+      exportedAt: new Date().toISOString(),
+      version: "1.0.0"
+    };
+    const blob = new Blob([JSON.stringify(dataPackage, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `appaflow_backup_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const filteredCurrencies = CURRENCIES.filter(c => 
@@ -119,7 +137,7 @@ const Settings: React.FC<SettingsProps> = ({
                       </div>
                       <div className="text-left">
                           <h3 className="font-bold text-slate-200">Profile</h3>
-                          <p className="text-xs text-slate-500">Your global preferred currency</p>
+                          <p className="text-xs text-slate-500">Global preferences & currency</p>
                       </div>
                   </div>
                   {expandedSection === 'general' ? <ChevronUp size={18} className="text-slate-400"/> : <ChevronDown size={18} className="text-slate-500"/>}
@@ -236,6 +254,69 @@ const Settings: React.FC<SettingsProps> = ({
                                   </button>
                               </div>
                           ))}
+                      </div>
+                  </div>
+              )}
+          </div>
+
+          {/* 3. App Installation & Backup */}
+          <div className={`bg-slate-900/60 rounded-2xl border border-slate-800 overflow-hidden transition-all duration-300 ${expandedSection === 'app' ? 'ring-1 ring-primary-500/50 shadow-lg' : ''}`}>
+              <button 
+                  onClick={() => toggleSection('app')} 
+                  className="w-full flex items-center justify-between p-4 hover:bg-slate-800/30 transition-colors"
+              >
+                  <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+                          <Smartphone size={20} />
+                      </div>
+                      <div className="text-left">
+                          <h3 className="font-bold text-slate-200">Mobile App & Backup</h3>
+                          <p className="text-xs text-slate-500">Install to home screen & data export</p>
+                      </div>
+                  </div>
+                  {expandedSection === 'app' ? <ChevronUp size={18} className="text-slate-400"/> : <ChevronDown size={18} className="text-slate-500"/>}
+              </button>
+              
+              {expandedSection === 'app' && (
+                  <div className="p-4 pt-0 border-t border-white/5 mt-2 animate-fade-in space-y-6">
+                      <div className="pt-4 space-y-4">
+                          <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-800">
+                              <div className="flex items-center gap-3 mb-2">
+                                  <ShieldCheck className="text-primary-400" size={18} />
+                                  <h4 className="text-sm font-bold text-white">Security & API Keys</h4>
+                              </div>
+                              <p className="text-xs text-slate-400 leading-relaxed mb-4">
+                                AppaFlow is zero-config. Your Gemini API environment is handled automatically. All processing happens locally on your device for maximum privacy.
+                              </p>
+                              <div className="flex gap-2">
+                                  <button 
+                                      onClick={exportDataPackage}
+                                      className="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-2.5 px-4 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors border border-slate-700"
+                                  >
+                                      <Download size={14} /> Export Backup
+                                  </button>
+                              </div>
+                          </div>
+
+                          <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-800">
+                              <div className="flex items-center gap-3 mb-2">
+                                  <Smartphone className="text-primary-400" size={18} />
+                                  <h4 className="text-sm font-bold text-white">Install on Mobile</h4>
+                              </div>
+                              <p className="text-xs text-slate-400 leading-relaxed mb-4">
+                                This app is a Progressive Web App (PWA). To install it on your mobile device:
+                              </p>
+                              <div className="space-y-3">
+                                  <div className="flex items-start gap-3">
+                                      <div className="w-5 h-5 rounded bg-slate-800 flex items-center justify-center text-[10px] font-bold text-white shrink-0">iOS</div>
+                                      <p className="text-[11px] text-slate-300">Tap the <Share size={12} className="inline mx-1"/> Share icon in Safari and select <strong>"Add to Home Screen"</strong>.</p>
+                                  </div>
+                                  <div className="flex items-start gap-3">
+                                      <div className="w-5 h-5 rounded bg-slate-800 flex items-center justify-center text-[10px] font-bold text-white shrink-0">Android</div>
+                                      <p className="text-[11px] text-slate-300">Tap the three dots (Menu) in Chrome and select <strong>"Install App"</strong>.</p>
+                                  </div>
+                              </div>
+                          </div>
                       </div>
                   </div>
               )}

@@ -78,12 +78,8 @@ const App: React.FC = () => {
   };
 
   const handleTransactionsFound = (newTxs: Transaction[], detectedCurrency?: string) => {
-    // If we detect a currency and user is still on default, maybe suggest or auto-set?
-    // For now, we prioritize user setting but display detected if it matches.
     const processedTxs = applyRulesToTransactions(newTxs, rules);
     setTransactions(prev => [...prev, ...processedTxs]);
-    
-    // Switch to dashboard after import
     setView(AppView.DASHBOARD);
   };
 
@@ -143,6 +139,7 @@ const App: React.FC = () => {
                 rules={rules} onUpdateRules={setRules} onApplyRules={handleApplyRulesRetroactively}
                 userProfile={userProfile} onUpdateProfile={setUserProfile}
                 categories={categories} onUpdateCategories={setCategories}
+                transactions={transactions}
               />
             )}
         </div>
