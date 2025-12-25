@@ -1,4 +1,3 @@
-
 import React, { useCallback, useState, useRef, useEffect } from 'react';
 import { UploadCloud, FileSpreadsheet, Loader2, CheckCircle2 } from 'lucide-react';
 import { analyzeFinancialDocument } from '../services/geminiService';
@@ -6,7 +5,7 @@ import { Transaction } from '../types';
 import { read, utils } from 'xlsx';
 
 interface ScanZoneProps {
-  onTransactionsFound: (txs: Transaction[]) => void;
+  onTransactionsFound: (txs: Transaction[], detectedCurrency?: string) => void;
   compact?: boolean;
   categories?: string[];
   onProcessingChange?: (isProcessing: boolean) => void;
@@ -18,7 +17,6 @@ const ScanZone: React.FC<ScanZoneProps> = ({ onTransactionsFound, compact = fals
   const [progress, setProgress] = useState(0);
   const progressInterval = useRef<number | null>(null);
 
-  // Notify parent of state changes to toggle dashboard visibility/welcome text
   useEffect(() => {
     onProcessingChange?.(isProcessing);
   }, [isProcessing, onProcessingChange]);
@@ -32,7 +30,6 @@ const ScanZone: React.FC<ScanZoneProps> = ({ onTransactionsFound, compact = fals
   const startProgress = () => {
     setProgress(0);
     if (progressInterval.current) clearInterval(progressInterval.current);
-    
     progressInterval.current = window.setInterval(() => {
       setProgress(prev => {
         if (prev >= 95) return 95;
@@ -50,18 +47,16 @@ const ScanZone: React.FC<ScanZoneProps> = ({ onTransactionsFound, compact = fals
 
   const analyzeWithGemini = async (data: string, mimeType: string) => {
     try {
-      const txs = await analyzeFinancialDocument(data, mimeType, categories);
+      const result = await analyzeFinancialDocument(data, mimeType, categories);
       completeProgress();
       
-      // Artificial delay for smooth UI transition
       setTimeout(() => {
-          onTransactionsFound(txs);
+          onTransactionsFound(result.transactions, result.detectedCurrency);
           setIsProcessing(false);
           setProgress(0);
       }, 1000);
     } catch (error) {
-        console.error(error);
-        alert("Analysis failed. Please try a different document.");
+        alert("Analysis failed. Document could not be processed.");
         setIsProcessing(false);
         if (progressInterval.current) clearInterval(progressInterval.current);
     }
@@ -69,12 +64,11 @@ const ScanZone: React.FC<ScanZoneProps> = ({ onTransactionsFound, compact = fals
 
   const processFile = async (file: File) => {
     if (!file) return;
-
     const isPDF = file.type === 'application/pdf';
     const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv');
 
     if (!isPDF && !isExcel) {
-      alert('Please upload a PDF Bank Statement or an Excel/CSV export.');
+      alert('Upload PDF or Excel/CSV only.');
       return;
     }
 
@@ -102,9 +96,7 @@ const ScanZone: React.FC<ScanZoneProps> = ({ onTransactionsFound, compact = fals
         reader.readAsArrayBuffer(file);
       }
     } catch (err) {
-      console.error(err);
       setIsProcessing(false);
-      if (progressInterval.current) clearInterval(progressInterval.current);
     }
   };
 
@@ -135,54 +127,33 @@ const ScanZone: React.FC<ScanZoneProps> = ({ onTransactionsFound, compact = fals
         onDrop={handleDrop}
       >
         <div className={`flex flex-col items-center w-full transition-all duration-500`}>
-          
           <div className={`flex items-center transition-all duration-500 ${isProcessing ? 'mb-4' : (compact ? 'gap-3 text-left w-full' : 'flex-col gap-3')}`}>
               <div className={`${isProcessing ? 'w-10 h-10' : (compact ? 'w-10 h-10' : 'w-12 h-12')} bg-slate-800/80 rounded-full flex items-center justify-center ring-1 ring-slate-700 shadow-lg shrink-0 transition-all`}>
-                  {isProcessing && progress === 100 ? (
-                      <CheckCircle2 className="text-emerald-400" size={compact || isProcessing ? 20 : 24} />
-                  ) : isProcessing ? (
-                      <Loader2 className="animate-spin text-primary-500" size={compact || isProcessing ? 20 : 24} />
-                  ) : (
-                      <UploadCloud className="text-primary-500" size={compact ? 20 : 24} />
-                  )}
+                  {isProcessing && progress === 100 ? <CheckCircle2 className="text-emerald-400" size={20} /> : 
+                   isProcessing ? <Loader2 className="animate-spin text-primary-500" size={20} /> : 
+                   <UploadCloud className="text-primary-500" size={compact ? 20 : 24} />}
               </div>
               <div className={`${!isProcessing && compact ? 'flex-1' : ''}`}>
                   <h3 className={`${isProcessing ? 'text-base' : (compact ? 'text-sm' : 'text-lg')} font-bold text-white transition-all`}>
                       {isProcessing ? (progress === 100 ? 'Analysis Complete' : 'Importing Statement...') : 'Import Statements'}
                   </h3>
-                  {!compact && !isProcessing && (
-                      <p className="text-slate-400 mt-1 text-xs px-4 animate-fade-in">
-                        PDF or Excel/CSV supported.
-                      </p>
-                  )}
               </div>
           </div>
 
           {isProcessing ? (
             <div className="w-full max-w-[240px] flex flex-col items-center justify-center space-y-3 z-10 animate-fade-in">
-               <div className="w-full space-y-1.5">
-                   <div className="w-full bg-slate-800/80 rounded-full h-2 overflow-hidden ring-1 ring-white/5">
-                      <div 
-                        className={`h-full rounded-full transition-all duration-300 ease-out shadow-[0_0_15px_rgba(99,102,241,0.5)] ${progress === 100 ? 'bg-emerald-500' : 'bg-primary-500'}`}
-                        style={{ width: `${progress}%` }}
-                      />
-                   </div>
+               <div className="w-full bg-slate-800/80 rounded-full h-2 overflow-hidden ring-1 ring-white/5">
+                  <div 
+                    className={`h-full rounded-full transition-all duration-300 ease-out ${progress === 100 ? 'bg-emerald-500' : 'bg-primary-500'}`}
+                    style={{ width: `${progress}%` }}
+                  />
                </div>
             </div>
           ) : (
-            <label className={`
-                cursor-pointer bg-primary-600 hover:bg-primary-500 text-white rounded-lg flex items-center justify-center gap-2 transition-all font-bold shadow-lg shadow-primary-500/20 active:scale-95 animate-fade-in
-                ${compact ? 'py-2 px-4 text-xs ml-auto' : 'py-2.5 px-6 mt-4 text-sm'}
-            `}>
+            <label className={`cursor-pointer bg-primary-600 hover:bg-primary-500 text-white rounded-lg flex items-center justify-center gap-2 transition-all font-bold shadow-lg shadow-primary-500/20 active:scale-95 animate-fade-in ${compact ? 'py-2 px-4 text-xs ml-auto' : 'py-2.5 px-6 mt-4 text-sm'}`}>
                 <FileSpreadsheet size={compact ? 14 : 16} />
                 Select File
-                <input 
-                    type="file" 
-                    className="hidden" 
-                    accept=".pdf,.csv,.xlsx,.xls" 
-                    onChange={handleFileInput}
-                    disabled={isProcessing}
-                />
+                <input type="file" className="hidden" accept=".pdf,.csv,.xlsx,.xls" onChange={handleFileInput} disabled={isProcessing} />
             </label>
           )}
         </div>

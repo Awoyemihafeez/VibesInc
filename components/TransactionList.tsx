@@ -1,14 +1,17 @@
 import React, { useMemo, useState } from 'react';
-import { Transaction, TransactionType } from '../types';
+import { Transaction, TransactionType, UserProfile } from '../types';
 import { ArrowDownLeft, ArrowUpRight, Search } from 'lucide-react';
+import { getCurrencySymbol } from '../constants';
 
 interface TransactionListProps {
   transactions: Transaction[];
   categories: string[];
+  userProfile: UserProfile;
 }
 
-const TransactionList: React.FC<TransactionListProps> = ({ transactions, categories }) => {
+const TransactionList: React.FC<TransactionListProps> = ({ transactions, categories, userProfile }) => {
   const [filter, setFilter] = useState('');
+  const symbol = getCurrencySymbol(userProfile.currency);
 
   // 1. Filter and sort by date first
   const filtered = useMemo(() => {
@@ -67,8 +70,6 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, categor
             sortedCategories.map(category => {
                 // Calculate total for this group to display in header
                 const groupTotal = grouped[category].reduce((sum, t) => {
-                    // Income adds, Expense subtracts for net flow representation, 
-                    // or we can just sum absolute values. Let's do net flow.
                     return t.type === TransactionType.INCOME ? sum + t.amount : sum - t.amount;
                 }, 0);
                 
@@ -83,7 +84,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, categor
                                 </span>
                              </h3>
                              <span className={`text-xs font-mono font-medium ${groupTotal >= 0 ? 'text-emerald-400' : 'text-slate-400'}`}>
-                                {groupTotal > 0 ? '+' : ''}{groupTotal.toFixed(2)}
+                                {groupTotal > 0 ? '+' : ''}{symbol}{Math.abs(groupTotal).toFixed(2)}
                              </span>
                         </div>
                         
@@ -109,7 +110,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, categor
                                         </div>
                                     </div>
                                     <div className={`font-mono text-sm font-medium ${t.type === TransactionType.INCOME ? 'text-emerald-400' : 'text-slate-200'}`}>
-                                        {t.type === TransactionType.INCOME ? '+' : '-'}${t.amount.toFixed(2)}
+                                        {t.type === TransactionType.INCOME ? '+' : '-'}{symbol}{t.amount.toFixed(2)}
                                     </div>
                                 </div>
                             ))}

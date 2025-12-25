@@ -1,4 +1,4 @@
-import { LayoutDashboard, ScanLine, List, Settings, PieChart, TrendingUp, AlertTriangle } from 'lucide-react';
+import { LayoutDashboard, List, Settings } from 'lucide-react';
 import React from 'react';
 
 export const COLORS = [
@@ -46,6 +46,10 @@ export const CURRENCIES = [
   { code: 'GHS', symbol: '₵', label: 'Ghanaian Cedi' },
   { code: 'AED', symbol: 'dh', label: 'UAE Dirham' },
 ];
+
+export const getCurrencySymbol = (code: string): string => {
+  return CURRENCIES.find(c => c.code === code)?.symbol || '$';
+};
 
 export const SAMPLE_DATA_SEED = [
   { id: '1', date: '2023-10-01', merchant: 'Coffee Shop', amount: 5.50, category: 'Food & Drink', type: 'EXPENSE' },

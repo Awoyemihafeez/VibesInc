@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, AreaChart, Area, XAxis, Tooltip } from 'recharts';
 import { Transaction, TransactionType, UserProfile } from '../types';
-import { COLORS } from '../constants';
+import { COLORS, getCurrencySymbol } from '../constants';
 import { TrendingUp, TrendingDown, Wallet, Receipt, Tags, Info } from 'lucide-react';
 import ScanZone from './ScanZone';
 
@@ -15,6 +15,7 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({ transactions, onImport, categories, userProfile }) => {
   const [analysisTab, setAnalysisTab] = useState<'transactions' | 'categories'>('transactions');
   const [isProcessing, setIsProcessing] = useState(false);
+  const symbol = getCurrencySymbol(userProfile.currency);
   
   // Summaries
   const summaries = useMemo(() => {
@@ -64,7 +65,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, onImport, categorie
       return (
           <div className="bg-slate-900 border border-slate-700 p-2 rounded-lg shadow-xl text-xs">
             <p className="text-slate-400 mb-1">{payload[0].payload.fullDate}</p>
-            <p className="font-bold text-white">Balance: <span style={{ color: trendColor }}>{payload[0].value > 0 ? '+' : ''}{Number(payload[0].value).toFixed(2)}</span></p>
+            <p className="font-bold text-white">Balance: <span style={{ color: trendColor }}>{payload[0].value > 0 ? '+' : ''}{symbol}{Number(payload[0].value).toFixed(2)}</span></p>
           </div>
       );
       }
@@ -99,18 +100,18 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, onImport, categorie
       <div className={`space-y-3 transition-all duration-500 ${isProcessing ? 'opacity-20 pointer-events-none blur-sm grayscale' : 'opacity-100'}`}>
           <div className="bg-slate-900/60 backdrop-blur-sm p-4 rounded-2xl border border-slate-800/50 shadow-lg">
                <div className="flex justify-between items-center mb-1">
-                  <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Net Cash Flow</span>
+                  <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Net Cash Flow ({userProfile.currency})</span>
                   <Wallet className="text-primary-500" size={16} />
                </div>
                <div className="text-3xl font-bold text-white mb-2">
-                 ${summaries.netFlow.toFixed(2)}
+                 {symbol}{summaries.netFlow.toFixed(2)}
                </div>
                <div className="flex gap-4 text-xs font-medium">
                  <span className="flex items-center text-emerald-400 gap-1 bg-emerald-500/10 px-2 py-1 rounded-md">
-                   <TrendingUp size={12} /> ${summaries.totalIncome.toFixed(0)} In
+                   <TrendingUp size={12} /> {symbol}{summaries.totalIncome.toFixed(0)} In
                  </span>
                  <span className="flex items-center text-rose-400 gap-1 bg-rose-500/10 px-2 py-1 rounded-md">
-                   <TrendingDown size={12} /> ${summaries.totalExpense.toFixed(0)} Out
+                   <TrendingDown size={12} /> {symbol}{summaries.totalExpense.toFixed(0)} Out
                  </span>
                </div>
           </div>
@@ -150,7 +151,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, onImport, categorie
                         <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }}></div>
                         <span className="text-slate-300 truncate">{cat.name}</span>
                         </div>
-                        <span className="font-mono text-slate-100 font-medium">${cat.value.toFixed(0)}</span>
+                        <span className="font-mono text-slate-100 font-medium">{symbol}{cat.value.toFixed(0)}</span>
                     </div>
                     ))}
                 </div>
@@ -164,7 +165,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, onImport, categorie
                           Balance Trend <Info size={10} className="text-slate-500"/>
                       </h3>
                       <div className={`text-lg font-bold ${trendColor === '#10b981' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                          {startEndDelta > 0 ? '+' : ''}${startEndDelta.toFixed(0)}
+                          {startEndDelta > 0 ? '+' : ''}{symbol}{startEndDelta.toFixed(0)}
                       </div>
                    </div>
                    <div className={`p-1.5 rounded-lg ${trendColor === '#10b981' ? 'bg-emerald-500/10' : 'bg-rose-500/10'}`}>
@@ -223,7 +224,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, onImport, categorie
                                   </div>
                               </div>
                               <div className="text-sm font-mono font-medium text-white">
-                                  ${t.amount.toFixed(2)}
+                                  {symbol}{t.amount.toFixed(2)}
                               </div>
                           </div>
                       ))}
@@ -234,7 +235,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, onImport, categorie
                           <div key={cat.name} className="space-y-1">
                               <div className="flex justify-between items-center text-xs text-slate-200">
                                   <span>{cat.name}</span>
-                                  <span className="font-mono">${cat.value.toFixed(0)}</span>
+                                  <span className="font-mono">{symbol}{cat.value.toFixed(0)}</span>
                               </div>
                               <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
                                   <div 

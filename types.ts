@@ -9,10 +9,11 @@ export interface Transaction {
   merchant: string;
   amount: number;
   category: string;
-  subCategory?: string; // New field
+  subCategory?: string;
   type: TransactionType;
-  flagged?: boolean; // For anomalies
-  originalSource?: string; // 'scan' | 'csv' | 'manual'
+  flagged?: boolean;
+  originalSource?: string;
+  detectedCurrency?: string; // Track currency from the specific document
 }
 
 export interface SpendingCategory {
@@ -44,11 +45,11 @@ export interface CategorizationRule {
   id: string;
   keyword: string;
   category: string;
-  subCategory?: string; // New field
+  subCategory?: string;
 }
 
 export interface UserProfile {
   name: string;
-  currency: string; // 'USD', 'EUR', etc.
-  avatar?: string; // Base64 string
+  currency: string;
+  avatar?: string;
 }
